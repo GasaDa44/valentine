@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Valentine's Day Ask</title>
+  <h1><b>by Esami Gasa</h1></b>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #fff0f5;
+      text-align: center;
+      padding: 50px;
+    }
+    h1 {
+      color: #e60073;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 18px;
+      margin: 10px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    .yes {
+      background-color: #66ff99;
+    }
+    .no {
+      background-color: #ff6666;
+    }
+    .hidden {
+      display: none;
+    }
+    #board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-gap: 5px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    .cell {
+      width: 100px;
+      height: 100px;
+      background-color: #fff;
+      border: 2px solid #e60073;
+      font-size: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    #winner {
+      margin-top: 20px;
+      font-size: 24px;
+      color: #e60073;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Hey 😊</h1>
+  <p>Will you be my Valentine? 💖</p>
+
+  <div id="first-choice">
+    <button class="yes" onclick="sayYes()">Yes</button>
+    <button class="no" onclick="askAgain()">No</button>
+  </div>
+
+  <div id="are-you-sure" class="hidden">
+    <p>Are you sure? 😢</p>
+    <button class="yes" onclick="goBack()">Oops... Go Back</button>
+    <button class="no" onclick="startTicTacToe()">Yes, I'm sure</button>
+  </div>
+
+  <div id="yes-response" class="hidden">
+    <h2>YAY! 💘 I’m so happy! 😍</h2>
+  </div>
+
+  <div id="game-section" class="hidden">
+    <h2>Then let fate decide with a Tic Tac Toe game!</h2>
+    <p>You = X 💖 | AI = O 💻</p>
+    <div id="board"></div>
+    <div id="winner"></div>
+  </div>
+
+ <script>
+  let board = ["", "", "", "", "", "", "", "", ""];
+  let gameOver = false;
+
+  function sayYes() {
+    document.getElementById("first-choice").classList.add("hidden");
+    document.getElementById("yes-response").classList.remove("hidden");
+  }
+
+  function askAgain() {
+    document.getElementById("first-choice").classList.add("hidden");
+    document.getElementById("are-you-sure").classList.remove("hidden");
+  }
+
+  function goBack() {
+    document.getElementById("are-you-sure").classList.add("hidden");
+    document.getElementById("first-choice").classList.remove("hidden");
+  }
+
+  function startTicTacToe() {
+    document.getElementById("are-you-sure").classList.add("hidden");
+    document.getElementById("game-section").classList.remove("hidden");
+    board = ["", "", "", "", "", "", "", "", ""];
+    gameOver = false;
+    renderBoard();
+    document.getElementById("winner").innerHTML = ""; // Reset winner text
+  }
+
+  function renderBoard() {
+    const boardElement = document.getElementById("board");
+    boardElement.innerHTML = "";
+    board.forEach((cell, index) => {
+      const cellDiv = document.createElement("div");
+      cellDiv.classList.add("cell");
+      cellDiv.innerText = cell;
+      cellDiv.addEventListener("click", () => playerMove(index));
+      boardElement.appendChild(cellDiv);
+    });
+  }
+
+  function playerMove(index) {
+    if (board[index] === "" && !gameOver) {
+      board[index] = "X";
+      renderBoard();
+      if (!checkWinner("X")) {
+        setTimeout(aiMove, 300);
+      }
+    }
+  }
+
+  function aiMove() {
+    if (gameOver) return;
+    const bestMove = minimax(board, "O").index;
+    board[bestMove] = "O";
+    renderBoard();
+    checkWinner("O");
+  }
+
+  function checkWinner(player) {
+    const winPatterns = [
+      [0,1,2],[3,4,5],[6,7,8],
+      [0,3,6],[1,4,7],[2,5,8],
+      [0,4,8],[2,4,6]
+    ];
+    for (let pattern of winPatterns) {
+      const [a, b, c] = pattern;
+      if (board[a] === player && board[b] === player && board[c] === player) {
+        gameOver = true;
+        if (player === "O") {
+          document.getElementById("winner").innerHTML = 
+            "🎉 YES it is! ❤️ The AI (O) won, it’s meant to be!";
+        } else {
+          document.getElementById("winner").innerHTML = 
+            "💔 NO it is... You (X) win.<br><a href='https://i.kym-cdn.com/photos/images/newsfeed/002/219/808/5c5.gif' target='_blank'>Click here to cry with the cat 😿</a>";
+        }
+        return true;
+      }
+    }
+    if (!board.includes("")) {
+      gameOver = true;
+      document.getElementById("winner").innerText = "😅 It's a draw! Try again!";
+      return true;
+    }
+    return false;
+  }
+
+  function minimax(newBoard, player) {
+    const availSpots = newBoard.map((v, i) => v === "" ? i : null).filter(v => v !== null);
+
+    if (checkWin(newBoard, "X")) return { score: -10 };
+    if (checkWin(newBoard, "O")) return { score: 10 };
+    if (availSpots.length === 0) return { score: 0 };
+
+    const moves = [];
+
+    for (let i = 0; i < availSpots.length; i++) {
+      const move = {};
+      move.index = availSpots[i];
+      newBoard[availSpots[i]] = player;
+
+      if (player === "O") {
+        let result = minimax(newBoard, "X");
+        move.score = result.score;
+      } else {
+        let result = minimax(newBoard, "O");
+        move.score = result.score;
+      }
+
+      newBoard[availSpots[i]] = "";
+      moves.push(move);
+    }
+
+    let bestMove;
+    if (player === "O") {
+      let bestScore = -Infinity;
+      for (let i = 0; i < moves.length; i++) {
+        if (moves[i].score > bestScore) {
+          bestScore = moves[i].score;
+          bestMove = i;
+        }
+      }
+    } else {
+      let bestScore = Infinity;
+      for (let i = 0; i < moves.length; i++) {
+        if (moves[i].score < bestScore) {
+          bestScore = moves[i].score;
+          bestMove = i;
+        }
+      }
+    }
+
+    return moves[bestMove];
+  }
+
+  function checkWin(boardState, player) {
+    const winCombos = [
+      [0,1,2],[3,4,5],[6,7,8],
+      [0,3,6],[1,4,7],[2,5,8],
+      [0,4,8],[2,4,6]
+    ];
+    return winCombos.some(combo =>
+      combo.every(i => boardState[i] === player)
+    );
+  }
+</script>
+
+
+</body>
+</html>
